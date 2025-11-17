@@ -91,6 +91,10 @@ export class CuentaCobroModel extends Model {
   @Column({ type: DataType.TEXT })
   observaciones!: string | null;
 
+  @AllowNull(true)
+  @Column({ type: DataType.TEXT, field: 'link_pago' })
+  linkPago!: string | null;
+
   @BelongsTo(() => ClientePaqueteModel)
   clientePaquete?: ClientePaqueteModel;
 
