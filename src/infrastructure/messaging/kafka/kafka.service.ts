@@ -43,7 +43,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   async enviarMensaje(
     topic: string,
-    mensaje: Record<string, unknown>,
+    mensaje: Record<string, unknown> | object,
   ): Promise<void> {
     try {
       await this.producer.send({
