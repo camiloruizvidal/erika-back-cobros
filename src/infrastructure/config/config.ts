@@ -13,4 +13,7 @@ export class Config {
   static readonly dbDialect = process.env.DB_DIALECT as Dialect;
   static readonly dbLogging = process.env.DB_LOGGING === 'true';
   static readonly jwtKey = process.env.JWT_KEY;
+  static readonly kafkaBroker = process.env.KAFKA_BROKER || 'localhost:9092';
+  static readonly kafkaClientId = process.env.KAFKA_CLIENT_ID || 'erika-back-cobros';
+  static readonly kafkaGroupId = process.env.KAFKA_GROUP_ID || 'erika-cobros-group';
 }

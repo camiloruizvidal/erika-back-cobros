@@ -3,14 +3,18 @@ import moment from 'moment';
 import { CuentaCobroRepository } from '../../infrastructure/persistence/repositories/cuenta-cobro.repository';
 import { ClientePaqueteRepository } from '../../infrastructure/persistence/repositories/cliente-paquete.repository';
 import { ProcesoGeneracionRepository } from '../../infrastructure/persistence/repositories/proceso-generacion.repository';
+import { KafkaService } from '../../infrastructure/messaging/kafka/kafka.service';
 import { EProcesoGeneracion } from '../../domain/enums/proceso-generacion.enum';
 import { EEstadoProceso } from '../../domain/enums/estado-proceso.enum';
 import { EFrecuenciaTipo } from '../../domain/enums/frecuencia-tipo.enum';
 import { ClientePaqueteModel } from '../../infrastructure/persistence/models/cliente-paquete.model';
+import { IGeneracionCuentasCobroIniciada } from '../../domain/interfaces/kafka-messages.interface';
 
 @Injectable()
 export class CuentasCobroService {
   private readonly logger = new Logger(CuentasCobroService.name);
+
+  constructor(private readonly kafkaService: KafkaService) {}
 
   async generarCuentasCobro(dias: number = 5): Promise<void> {
     this.logger.log(
@@ -26,6 +30,20 @@ export class CuentasCobroService {
       proceso: EProcesoGeneracion.GENERACION_CUENTAS_COBRO,
       diaProceso: fechaObjetivo.date(),
     });
+
+    // Publicar evento: Inicio de generación
+    try {
+      const mensajeInicio: IGeneracionCuentasCobroIniciada = {
+        fechaObjetivo: fechaObjetivo.toISOString(),
+        timestamp: moment.utc().toISOString(),
+      };
+      await this.kafkaService.enviarMensaje(
+        'generacion_cuentas_cobro_iniciada',
+        mensajeInicio,
+      );
+    } catch (error) {
+      this.logger.error('Error al publicar evento de inicio:', error);
+    }
 
     try {
       const paquetesActivos =
@@ -71,7 +89,22 @@ export class CuentasCobroService {
           `Generación de cuentas de cobro completada. Se generaron ${cantidadGenerada} cuentas de cobro`,
         );
 
-        // TODO: Generar PDF y enviar correo
+        // Publicar evento: Generación completada
+        try {
+          await this.kafkaService.enviarMensaje(
+            'generacion_cuentas_cobro_completada',
+            {
+              fechaCobro: fechaCobro.toISOString(),
+              cantidadGenerada,
+              timestamp: moment.utc().toISOString(),
+            },
+          );
+        } catch (error) {
+          this.logger.error(
+            'Error al publicar evento de generación completada:',
+            error,
+          );
+        }
       } else {
         throw new Error(
           'El proceso de generación no se completó correctamente',
