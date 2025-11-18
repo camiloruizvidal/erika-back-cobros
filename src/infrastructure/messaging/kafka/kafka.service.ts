@@ -1,14 +1,26 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { Kafka, Producer, KafkaConfig } from 'kafkajs';
 import { Config } from '../../config/config';
 
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(KafkaService.name);
-  private kafka: Kafka;
-  private producer: Producer;
+  private kafka: Kafka | null = null;
+  private producer: Producer | null = null;
 
   constructor() {
+    if (!Config.kafkaBroker || !Config.kafkaClientId) {
+      this.logger.warn(
+        'Kafka no configurado. Las variables KAFKA_BROKER y KAFKA_CLIENT_ID son requeridas.',
+      );
+      return;
+    }
+
     const kafkaConfig: KafkaConfig = {
       clientId: Config.kafkaClientId,
       brokers: [Config.kafkaBroker],
@@ -23,6 +35,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit(): Promise<void> {
+    if (!this.producer) {
+      this.logger.warn('Kafka producer no inicializado. Saltando conexión.');
+      return;
+    }
     try {
       await this.producer.connect();
       this.logger.log('Kafka producer conectado exitosamente');
@@ -33,6 +49,9 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    if (!this.producer) {
+      return;
+    }
     try {
       await this.producer.disconnect();
       this.logger.log('Kafka producer desconectado');
@@ -45,6 +64,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     topic: string,
     mensaje: Record<string, unknown> | object,
   ): Promise<void> {
+    if (!this.producer) {
+      this.logger.warn(
+        `Kafka no configurado. No se puede enviar mensaje al topic: ${topic}`,
+      );
+      return;
+    }
     try {
       await this.producer.send({
         topic,
@@ -64,7 +89,6 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   getProducer(): Producer {
-    return this.producer;
+    return this.producer!;
   }
 }
-
