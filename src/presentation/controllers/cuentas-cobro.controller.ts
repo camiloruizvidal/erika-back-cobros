@@ -24,6 +24,7 @@ export class CuentasCobroController {
     description: 'Proceso de generación iniciado exitosamente',
   })
   generarCuentasCobro(): { mensaje: string } {
+    Logger.verbose('✅ COBROS: Se recibió petición POST /api/v1/billing/generate', 'CuentasCobroController');
     try {
       this.cuentasCobroService.generarCuentasCobro().catch((error) => {
         this.logger.error(

@@ -104,6 +104,7 @@ export class CuentasCobroService {
 
         // Publicar evento: Generación completada
         try {
+          Logger.verbose('✅ COBROS: Enviando mensaje Kafka - generacion_cuentas_cobro_completada', 'CuentasCobroService');
           await this.kafkaService.enviarMensaje(
             'generacion_cuentas_cobro_completada',
             {
