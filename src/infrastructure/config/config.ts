@@ -13,7 +13,21 @@ export class Config {
   static readonly dbDialect = process.env.DB_DIALECT as Dialect;
   static readonly dbLogging = process.env.DB_LOGGING === 'true';
   static readonly jwtKey = process.env.JWT_KEY;
-  static readonly kafkaBroker = process.env.KAFKA_BROKER || 'localhost:9092';
-  static readonly kafkaClientId = process.env.KAFKA_CLIENT_ID || 'erika-back-cobros';
-  static readonly kafkaGroupId = process.env.KAFKA_GROUP_ID || 'erika-cobros-group';
+  static readonly kafkaBroker = process.env.KAFKA_BROKER;
+  static readonly kafkaClientId = process.env.KAFKA_CLIENT_ID;
+  static readonly kafkaGroupId = process.env.KAFKA_GROUP_ID;
+}
+
+const errors: string[] = [];
+Object.keys(Config).forEach((key) => {
+  if (
+    Config[key] === null ||
+    Config[key] === undefined ||
+    `${Config[key]}`.trim() === ''
+  ) {
+    errors.push(`La variable de entorno ${key} es requerida`);
+  }
+});
+if (errors.length > 0) {
+  throw new Error(errors.join('\n'));
 }
