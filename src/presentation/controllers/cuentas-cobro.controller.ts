@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Post,
-  HttpCode,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Post, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
 import { CuentasCobroService } from '../../application/services/cuentas-cobro.service';
 import { ManejadorError } from '../../utils/manejador-error/manejador-error';
@@ -31,7 +25,7 @@ export class CuentasCobroController {
   })
   generarCuentasCobro(): { mensaje: string } {
     try {
-      this.cuentasCobroService.generarCuentasCobro(5).catch((error) => {
+      this.cuentasCobroService.generarCuentasCobro().catch((error) => {
         this.logger.error(
           `Error en proceso asíncrono de generación de cuentas de cobro: ${JSON.stringify(error)}`,
         );
@@ -46,4 +40,3 @@ export class CuentasCobroController {
     }
   }
 }
-

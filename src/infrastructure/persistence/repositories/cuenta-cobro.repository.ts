@@ -1,45 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { QueryTypes } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { Transformador } from '../../../utils/transformador.util';
 import { CuentaCobroModel } from '../models/cuenta-cobro.model';
 import { CuentaCobroServicioModel } from '../models/cuenta-cobro-servicio.model';
-import { EEstadoCuentaCobro } from '../../../domain/enums/estado-cuenta-cobro.enum';
-
-export interface ICrearCuentaCobro {
-  tenantId: number;
-  clienteId: number;
-  clientePaqueteId: number;
-  fechaCobro: Date;
-  valorTotal: number;
-  valorPaquete: number;
-  valorConceptosAdicionales: number;
-  estado: EEstadoCuentaCobro;
-  observaciones?: string | null;
-}
-
-export interface ICuentaCobro {
-  id: number;
-  tenantId: number;
-  clienteId: number;
-  clientePaqueteId: number;
-  fechaCobro: Date;
-  valorTotal: number;
-  valorPaquete: number;
-  valorConceptosAdicionales: number;
-  estado: string;
-  urlPdf: string | null;
-  siEnvioCorreo: boolean;
-  fechaEnvioCorreo: Date | null;
-  observaciones: string | null;
-}
-
-export interface ICrearCuentaCobroServicio {
-  cuentaCobroId: number;
-  clientePaqueteServicioId: number;
-  nombreServicio: string;
-  valorOriginal: number;
-  valorAcordado: number;
-}
+import {
+  ICrearCuentaCobro,
+  ICuentaCobro,
+  ICrearCuentaCobroServicio,
+} from './interfaces/cuenta-cobro-repository.interface';
 
 export class CuentaCobroRepository {
   private static readonly logger = new Logger(CuentaCobroRepository.name);
@@ -75,62 +44,37 @@ export class CuentaCobroRepository {
     );
   }
 
-  static async contarCuentasCobroGeneradas(fechaCobro: Date): Promise<number> {
-    const sequelize = CuentaCobroModel.sequelize;
-    if (!sequelize) {
-      throw new Error('Sequelize instance not available');
-    }
-
-    const fechaCobroISO = fechaCobro.toISOString();
-
-    const query = `
-      SELECT COUNT(*) as cantidad
-      FROM cuentas_cobro
-      WHERE fecha_cobro = :fechaCobro::timestamp
-        AND deleted_at IS NULL;
-    `;
-
-    const resultado = await sequelize.query(query, {
-      replacements: {
-        fechaCobro: fechaCobroISO,
+  static async contarCuentasCobroGeneradas(
+    fechaCobroFormateada: string,
+  ): Promise<number> {
+    return await CuentaCobroModel.count({
+      where: {
+        fechaCobro: Sequelize.where(
+          Sequelize.fn('DATE', Sequelize.col('fecha_cobro')),
+          fechaCobroFormateada,
+        ),
       },
-      type: QueryTypes.SELECT,
+      paranoid: true,
     });
-
-    const cantidad =
-      Array.isArray(resultado) && resultado.length > 0
-        ? Number((resultado[0] as { cantidad: string }).cantidad)
-        : 0;
-
-    return cantidad;
   }
 
   static async generarCuentasCobroMasivo(
     idsPaquetesElegibles: number[],
-    fechaCobro: Date,
-    inicioDia: Date,
-    finDia: Date,
+    fechaCobroISO: string,
+    inicioDiaISO: string,
+    finDiaISO: string,
+    estadoPendiente: string,
+    mesActual: number,
+    anioActual: number,
   ): Promise<boolean> {
     const sequelize = CuentaCobroModel.sequelize;
     if (!sequelize) {
       throw new Error('Sequelize instance not available');
     }
 
-    const fechaCobroISO = fechaCobro.toISOString();
-    const inicioDiaISO = inicioDia.toISOString();
-    const finDiaISO = finDia.toISOString();
-    const estadoPendiente = EEstadoCuentaCobro.PENDIENTE;
-    const mesActual = fechaCobro.getUTCMonth() + 1;
-    const anioActual = fechaCobro.getUTCFullYear();
-
     const transaction = await sequelize.transaction();
 
     try {
-      if (idsPaquetesElegibles.length === 0) {
-        await transaction.commit();
-        return true;
-      }
-
       const idsPaquetesString = idsPaquetesElegibles.join(',');
 
       const queryCompleta = `
@@ -264,4 +208,3 @@ export class CuentaCobroRepository {
     }
   }
 }
-

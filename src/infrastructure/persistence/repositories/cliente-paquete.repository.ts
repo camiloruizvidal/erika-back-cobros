@@ -10,11 +10,9 @@ export class ClientePaqueteRepository {
       },
     });
 
-    const paquetesTransformados = Transformador.extraerDataValues<
-      ClientePaqueteModel[]
-    >(paquetes);
+    const paquetesTransformados =
+      Transformador.extraerDataValues<ClientePaqueteModel[]>(paquetes);
 
     return paquetesTransformados as ClientePaqueteModel[];
   }
 }
-

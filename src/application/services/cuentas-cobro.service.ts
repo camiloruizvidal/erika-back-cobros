@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import moment from 'moment';
 import { CuentaCobroRepository } from '../../infrastructure/persistence/repositories/cuenta-cobro.repository';
+import { FormatearFecha } from '../../utils/functions/formatear-fecha.util';
 import { ClientePaqueteRepository } from '../../infrastructure/persistence/repositories/cliente-paquete.repository';
 import { ProcesoGeneracionRepository } from '../../infrastructure/persistence/repositories/proceso-generacion.repository';
 import { KafkaService } from '../../infrastructure/messaging/kafka/kafka.service';
 import { EProcesoGeneracion } from '../../domain/enums/proceso-generacion.enum';
 import { EEstadoProceso } from '../../domain/enums/estado-proceso.enum';
+import { EEstadoCuentaCobro } from '../../domain/enums/estado-cuenta-cobro.enum';
 import { EFrecuenciaTipo } from '../../domain/enums/frecuencia-tipo.enum';
 import { ClientePaqueteModel } from '../../infrastructure/persistence/models/cliente-paquete.model';
 import { IGeneracionCuentasCobroIniciada } from '../../domain/interfaces/kafka-messages.interface';
@@ -31,7 +33,6 @@ export class CuentasCobroService {
       diaProceso: fechaObjetivo.date(),
     });
 
-    // Publicar evento: Inicio de generación
     try {
       const mensajeInicio: IGeneracionCuentasCobroIniciada = {
         fechaObjetivo: fechaObjetivo.toISOString(),
@@ -46,8 +47,7 @@ export class CuentasCobroService {
     }
 
     try {
-      const paquetesActivos =
-        (await ClientePaqueteRepository.buscarActivos()) as ClientePaqueteModel[];
+      const paquetesActivos = await ClientePaqueteRepository.buscarActivos();
 
       const idsPaquetesElegibles = this.filtrarPaquetesElegibles(
         paquetesActivos,
@@ -67,16 +67,29 @@ export class CuentasCobroService {
         return;
       }
 
+      const fechaCobroISO = fechaCobro.toISOString();
+      const inicioDiaISO = inicioDia.toISOString();
+      const finDiaISO = finDia.toISOString();
+      const estadoPendiente = EEstadoCuentaCobro.PENDIENTE;
+      const mesActual = fechaCobro.getUTCMonth() + 1;
+      const anioActual = fechaCobro.getUTCFullYear();
+
       const exito = await CuentaCobroRepository.generarCuentasCobroMasivo(
         idsPaquetesElegibles,
-        fechaCobro,
-        inicioDia,
-        finDia,
+        fechaCobroISO,
+        inicioDiaISO,
+        finDiaISO,
+        estadoPendiente,
+        mesActual,
+        anioActual,
       );
 
       if (exito) {
+        const fechaCobroFormateada = FormatearFecha.fechaUTC(fechaCobro);
         const cantidadGenerada =
-          await CuentaCobroRepository.contarCuentasCobroGeneradas(fechaCobro);
+          await CuentaCobroRepository.contarCuentasCobroGeneradas(
+            fechaCobroFormateada,
+          );
 
         await ProcesoGeneracionRepository.actualizarProceso(proceso.id, {
           estado: EEstadoProceso.EXITOSO,
@@ -187,4 +200,3 @@ export class CuentasCobroService {
     return idsElegibles;
   }
 }
-
