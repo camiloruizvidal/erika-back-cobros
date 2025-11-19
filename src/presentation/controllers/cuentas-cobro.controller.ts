@@ -27,8 +27,6 @@ import { GenerarCuentasCobroResponseDto } from '../dto/generar-cuentas-cobro.res
 import { PaginadoCuentasCobroRequestDto } from '../dto/paginado-cuentas-cobro.request.dto';
 import { CuentasCobroPaginadasResponseDto } from '../dto/cuentas-cobro-paginadas.response.dto';
 import { EstadosCuentaCobroResponseDto } from '../dto/estados-cuenta-cobro.response.dto';
-import { PaginadoPagosRequestDto } from '../dto/paginado-pagos.request.dto';
-import { PagosPaginadasResponseDto } from '../dto/pagos-paginadas.response.dto';
 import { JwtTenantGuard } from '../guards/jwt-tenant.guard';
 import { IPaginado } from '../../shared/interfaces/paginado.interface';
 import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
@@ -158,43 +156,6 @@ export class CuentasCobroController {
     }
   }
 
-  @Get('pagos')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtTenantGuard)
-  @ApiOperation({
-    summary: 'Listar pagos',
-    description:
-      'Obtiene una lista paginada de pagos (cuentas de cobro con estado pagada)',
-  })
-  @ApiOkResponse({
-    description: 'Lista de pagos obtenida exitosamente',
-    type: PagosPaginadasResponseDto,
-  })
-  async listarPagos(
-    @Query() query: PaginadoPagosRequestDto,
-    @Req() request: RequestConTenant,
-  ): Promise<PagosPaginadasResponseDto> {
-    try {
-      const tenantId = request.tenantId;
-      const pagina = query.pagina ?? 1;
-      const tamanoPagina = query.tamanoPagina ?? 10;
-      const clientePaqueteId = query.clientePaqueteId;
-
-      const resultado = await this.cuentasCobroService.listarPagos(
-        tenantId,
-        pagina,
-        tamanoPagina,
-        clientePaqueteId,
-      );
-
-      return plainToInstance(PagosPaginadasResponseDto, resultado, {
-        excludeExtraneousValues: true,
-      });
-    } catch (error) {
-      this.logger.error({ error: JSON.stringify(error) });
-      this.manejadorError.resolverErrorApi(error);
-    }
-  }
 
   @Get(':id/pdf')
   @HttpCode(HttpStatus.OK)

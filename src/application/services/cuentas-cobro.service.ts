@@ -15,10 +15,7 @@ import { ClientePaqueteModel } from '../../infrastructure/persistence/models/cli
 import { CuentaCobroModel } from '../../infrastructure/persistence/models/cuenta-cobro.model';
 import { IGeneracionCuentasCobroIniciada } from '../../domain/interfaces/kafka-messages.interface';
 import { IPaginado } from '../../shared/interfaces/paginado.interface';
-import {
-  ICuentaCobroListado,
-  IPagoListado,
-} from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
+import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
 
 @Injectable()
 export class CuentasCobroService {
@@ -308,34 +305,6 @@ export class CuentasCobroService {
     };
   }
 
-  async listarPagos(
-    tenantId: number,
-    pagina: number,
-    tamanoPagina: number,
-    clientePaqueteId: number,
-  ): Promise<IPaginado<IPagoListado>> {
-    const offset = (pagina - 1) * tamanoPagina;
-
-    const resultado = await CuentaCobroRepository.listarPagosPaginados(
-      tenantId,
-      offset,
-      tamanoPagina,
-      clientePaqueteId,
-    );
-
-    const total = resultado.count;
-    const totalPaginas = tamanoPagina > 0 ? Math.ceil(total / tamanoPagina) : 0;
-
-    return {
-      meta: {
-        total,
-        pagina,
-        tamanoPagina,
-        totalPaginas,
-      },
-      data: resultado.rows,
-    };
-  }
 
   async obtenerPdfPago(
     tenantId: number,
