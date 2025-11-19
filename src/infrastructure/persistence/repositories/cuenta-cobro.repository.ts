@@ -215,6 +215,11 @@ export class CuentaCobroRepository {
     offset: number,
     limit: number,
     filtro?: string,
+    estado?: string,
+    tienePdf?: string,
+    siEnvioCorreo?: string,
+    fechaInicio?: Date,
+    fechaFin?: Date,
   ): Promise<IResultadoFindAndCount<ICuentaCobroListado>> {
     const includeOptions: any = {
       model: ClienteModel,
@@ -242,10 +247,39 @@ export class CuentaCobroRepository {
       };
     }
 
+    const whereClause: any = {
+      tenantId,
+    };
+
+    if (estado) {
+      whereClause.estado = estado;
+    }
+
+    if (tienePdf === 'true') {
+      whereClause.urlPdf = { [Op.ne]: null };
+    } else if (tienePdf === 'false') {
+      whereClause.urlPdf = null;
+    }
+
+    if (siEnvioCorreo === 'true') {
+      whereClause.siEnvioCorreo = true;
+    } else if (siEnvioCorreo === 'false') {
+      whereClause.siEnvioCorreo = false;
+    }
+
+    if (fechaInicio || fechaFin) {
+      const condicionesFecha: any = {};
+      if (fechaInicio) {
+        condicionesFecha[Op.gte] = fechaInicio;
+      }
+      if (fechaFin) {
+        condicionesFecha[Op.lte] = fechaFin;
+      }
+      whereClause.fechaCobro = condicionesFecha;
+    }
+
     const resultado = await CuentaCobroModel.findAndCountAll({
-      where: {
-        tenantId,
-      },
+      where: whereClause,
       include: [includeOptions],
       offset,
       limit,

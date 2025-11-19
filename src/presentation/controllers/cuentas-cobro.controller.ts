@@ -26,6 +26,7 @@ import { ManejadorError } from '../../utils/manejador-error/manejador-error';
 import { GenerarCuentasCobroResponseDto } from '../dto/generar-cuentas-cobro.response.dto';
 import { PaginadoCuentasCobroRequestDto } from '../dto/paginado-cuentas-cobro.request.dto';
 import { CuentasCobroPaginadasResponseDto } from '../dto/cuentas-cobro-paginadas.response.dto';
+import { EstadosCuentaCobroResponseDto } from '../dto/estados-cuenta-cobro.response.dto';
 import { JwtTenantGuard } from '../guards/jwt-tenant.guard';
 import { IPaginado } from '../../shared/interfaces/paginado.interface';
 import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
@@ -76,6 +77,34 @@ export class CuentasCobroController {
     }
   }
 
+  @Get('estados')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtTenantGuard)
+  @ApiOperation({
+    summary: 'Obtener estados de cuenta de cobro',
+    description:
+      'Obtiene la lista de estados disponibles para cuentas de cobro',
+  })
+  @ApiOkResponse({
+    description: 'Lista de estados obtenida exitosamente',
+    type: EstadosCuentaCobroResponseDto,
+  })
+  obtenerEstados(): EstadosCuentaCobroResponseDto {
+    try {
+      const estados = this.cuentasCobroService.obtenerEstados();
+      return plainToInstance(
+        EstadosCuentaCobroResponseDto,
+        { estados },
+        {
+          excludeExtraneousValues: true,
+        },
+      );
+    } catch (error) {
+      this.logger.error({ error: JSON.stringify(error) });
+      this.manejadorError.resolverErrorApi(error);
+    }
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtTenantGuard)
@@ -97,6 +126,11 @@ export class CuentasCobroController {
       const pagina = query.pagina ?? 1;
       const tamanoPagina = query.tamanoPagina ?? 10;
       const filtro = query.filtro?.trim() || undefined;
+      const estado = query.estado;
+      const tienePdf = query.tienePdf;
+      const siEnvioCorreo = query.siEnvioCorreo;
+      const fechaInicio = query.fechaInicio;
+      const fechaFin = query.fechaFin;
 
       const resultado: IPaginado<ICuentaCobroListado> =
         await this.cuentasCobroService.listarCuentasCobro(
@@ -104,6 +138,11 @@ export class CuentasCobroController {
           pagina,
           tamanoPagina,
           filtro,
+          estado,
+          tienePdf,
+          siEnvioCorreo,
+          fechaInicio,
+          fechaFin,
         );
 
       return plainToInstance(CuentasCobroPaginadasResponseDto, resultado, {

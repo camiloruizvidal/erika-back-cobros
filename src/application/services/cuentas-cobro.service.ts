@@ -213,14 +213,35 @@ export class CuentasCobroService {
     pagina: number,
     tamanoPagina: number,
     filtro?: string,
+    estado?: string,
+    tienePdf?: string,
+    siEnvioCorreo?: string,
+    fechaInicio?: string,
+    fechaFin?: string,
   ): Promise<IPaginado<ICuentaCobroListado>> {
     const offset = (pagina - 1) * tamanoPagina;
+
+    let fechaInicioDate: Date | undefined;
+    let fechaFinDate: Date | undefined;
+
+    if (fechaInicio) {
+      fechaInicioDate = moment.utc(fechaInicio).startOf('day').toDate();
+    }
+
+    if (fechaFin) {
+      fechaFinDate = moment.utc(fechaFin).endOf('day').toDate();
+    }
 
     const resultado = await CuentaCobroRepository.listarCuentasCobroPaginadas(
       tenantId,
       offset,
       tamanoPagina,
       filtro,
+      estado,
+      tienePdf,
+      siEnvioCorreo,
+      fechaInicioDate,
+      fechaFinDate,
     );
 
     const total = resultado.count;
@@ -235,6 +256,15 @@ export class CuentasCobroService {
       },
       data: resultado.rows,
     };
+  }
+
+  obtenerEstados(): Array<{ valor: string; etiqueta: string }> {
+    return [
+      { valor: 'pendiente', etiqueta: 'Pendiente' },
+      { valor: 'pagada', etiqueta: 'Pagada' },
+      { valor: 'mora', etiqueta: 'Mora' },
+      { valor: 'cancelada', etiqueta: 'Cancelada' },
+    ];
   }
 
   async obtenerCuentaCobroPorId(
