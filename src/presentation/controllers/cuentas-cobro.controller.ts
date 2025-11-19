@@ -1,7 +1,9 @@
 import { Controller, Post, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { CuentasCobroService } from '../../application/services/cuentas-cobro.service';
 import { ManejadorError } from '../../utils/manejador-error/manejador-error';
+import { GenerarCuentasCobroResponseDto } from '../dto/generar-cuentas-cobro.response.dto';
 
 @ApiTags('Cuentas de Cobro')
 @Controller('api/v1/billing')
@@ -22,8 +24,9 @@ export class CuentasCobroController {
   })
   @ApiCreatedResponse({
     description: 'Proceso de generación iniciado exitosamente',
+    type: GenerarCuentasCobroResponseDto,
   })
-  generarCuentasCobro(): { mensaje: string } {
+  generarCuentasCobro(): GenerarCuentasCobroResponseDto {
     Logger.verbose(
       '✅ COBROS: Se recibió petición POST /api/v1/billing/generate',
       'CuentasCobroController',
@@ -35,9 +38,9 @@ export class CuentasCobroController {
         );
       });
 
-      return {
+      return plainToInstance(GenerarCuentasCobroResponseDto, {
         mensaje: 'Proceso de generación de cuentas de cobro iniciado',
-      };
+      });
     } catch (error) {
       this.logger.error({ error: JSON.stringify(error) });
       this.manejadorError.resolverErrorApi(error);
