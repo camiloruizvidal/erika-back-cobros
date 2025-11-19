@@ -4,6 +4,7 @@ import { Transformador } from '../../../utils/transformador.util';
 import { CuentaCobroModel } from '../models/cuenta-cobro.model';
 import { CuentaCobroServicioModel } from '../models/cuenta-cobro-servicio.model';
 import { ClienteModel } from '../models/cliente.model';
+import { ClientePaqueteModel } from '../models/cliente-paquete.model';
 import {
   ICrearCuentaCobro,
   ICuentaCobro,
@@ -220,6 +221,7 @@ export class CuentaCobroRepository {
     siEnvioCorreo?: string,
     fechaInicio?: Date,
     fechaFin?: Date,
+    paqueteId?: number,
   ): Promise<IResultadoFindAndCount<ICuentaCobroListado>> {
     const includeOptions: any = {
       model: ClienteModel,
@@ -244,6 +246,19 @@ export class CuentaCobroRepository {
           { nombreCompleto: { [Op.iLike]: filtroBusqueda } },
           { identificacion: { [Op.iLike]: filtroBusqueda } },
         ],
+      };
+    }
+
+    const includeClientePaquete: any = {
+      model: ClientePaqueteModel,
+      as: 'clientePaquete',
+      attributes: ['id', 'paqueteOriginalId'],
+      required: true,
+    };
+
+    if (paqueteId) {
+      includeClientePaquete.where = {
+        paqueteOriginalId: paqueteId,
       };
     }
 
@@ -280,7 +295,7 @@ export class CuentaCobroRepository {
 
     const resultado = await CuentaCobroModel.findAndCountAll({
       where: whereClause,
-      include: [includeOptions],
+      include: [includeOptions, includeClientePaquete],
       offset,
       limit,
       order: [

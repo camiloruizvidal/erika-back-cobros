@@ -218,6 +218,7 @@ export class CuentasCobroService {
     siEnvioCorreo?: string,
     fechaInicio?: string,
     fechaFin?: string,
+    paqueteId?: number,
   ): Promise<IPaginado<ICuentaCobroListado>> {
     const offset = (pagina - 1) * tamanoPagina;
 
@@ -242,6 +243,7 @@ export class CuentasCobroService {
       siEnvioCorreo,
       fechaInicioDate,
       fechaFinDate,
+      paqueteId,
     );
 
     const total = resultado.count;

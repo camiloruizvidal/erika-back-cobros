@@ -131,6 +131,7 @@ export class CuentasCobroController {
       const siEnvioCorreo = query.siEnvioCorreo;
       const fechaInicio = query.fechaInicio;
       const fechaFin = query.fechaFin;
+      const paqueteId = query.paqueteId;
 
       const resultado: IPaginado<ICuentaCobroListado> =
         await this.cuentasCobroService.listarCuentasCobro(
@@ -143,6 +144,7 @@ export class CuentasCobroController {
           siEnvioCorreo,
           fechaInicio,
           fechaFin,
+          paqueteId,
         );
 
       return plainToInstance(CuentasCobroPaginadasResponseDto, resultado, {

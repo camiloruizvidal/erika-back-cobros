@@ -85,4 +85,13 @@ export class PaginadoCuentasCobroRequestDto extends PaginadoRequestDto {
   )
   @Expose({ name: 'fecha_fin' })
   fechaFin?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtro por ID del paquete original',
+    type: Number,
+    example: 1,
+  })
+  @IsOptional()
+  @Expose({ name: 'paquete_id' })
+  paqueteId?: number;
 }
