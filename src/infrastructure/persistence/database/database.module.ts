@@ -7,6 +7,7 @@ import { ConceptoAdicionalModel } from '../models/concepto-adicional.model';
 import { ClientePaqueteModel } from '../models/cliente-paquete.model';
 import { ClientePaqueteServicioModel } from '../models/cliente-paquete-servicio.model';
 import { ProcesoGeneracionModel } from '../models/proceso-generacion.model';
+import { ClienteModel } from '../models/cliente.model';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProcesoGeneracionModel } from '../models/proceso-generacion.model';
         ClientePaqueteModel,
         ClientePaqueteServicioModel,
         ProcesoGeneracionModel,
+        ClienteModel,
       ],
       logging: Config.dbLogging,
       define: {
@@ -33,4 +35,3 @@ import { ProcesoGeneracionModel } from '../models/proceso-generacion.model';
   ],
 })
 export class DatabaseModule {}
-

@@ -1,14 +1,16 @@
 import { Logger } from '@nestjs/common';
-import { QueryTypes } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
+import { QueryTypes, Sequelize, Op } from 'sequelize';
 import { Transformador } from '../../../utils/transformador.util';
 import { CuentaCobroModel } from '../models/cuenta-cobro.model';
 import { CuentaCobroServicioModel } from '../models/cuenta-cobro-servicio.model';
+import { ClienteModel } from '../models/cliente.model';
 import {
   ICrearCuentaCobro,
   ICuentaCobro,
   ICrearCuentaCobroServicio,
+  ICuentaCobroListado,
 } from './interfaces/cuenta-cobro-repository.interface';
+import { IResultadoFindAndCount } from '../../../shared/interfaces/sequelize-find.interface';
 
 export class CuentaCobroRepository {
   private static readonly logger = new Logger(CuentaCobroRepository.name);
@@ -206,5 +208,74 @@ export class CuentaCobroRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  static async listarCuentasCobroPaginadas(
+    tenantId: number,
+    offset: number,
+    limit: number,
+    filtro?: string,
+  ): Promise<IResultadoFindAndCount<ICuentaCobroListado>> {
+    const includeOptions: any = {
+      model: ClienteModel,
+      as: 'cliente',
+      attributes: [
+        'id',
+        'primerNombre',
+        'segundoNombre',
+        'primerApellido',
+        'segundoApellido',
+        'nombreCompleto',
+        'correo',
+        'identificacion',
+      ],
+      required: true,
+    };
+
+    if (filtro && filtro.trim().length > 0) {
+      const filtroBusqueda = `%${filtro.trim()}%`;
+      includeOptions.where = {
+        [Op.or]: [
+          { nombreCompleto: { [Op.iLike]: filtroBusqueda } },
+          { identificacion: { [Op.iLike]: filtroBusqueda } },
+        ],
+      };
+    }
+
+    const resultado = await CuentaCobroModel.findAndCountAll({
+      where: {
+        tenantId,
+      },
+      include: [includeOptions],
+      offset,
+      limit,
+      order: [
+        ['fechaCobro', 'DESC'],
+        ['id', 'DESC'],
+      ],
+      paranoid: true,
+    });
+
+    return Transformador.extraerDataValues(resultado);
+  }
+
+  static async obtenerPorId(
+    tenantId: number,
+    id: number,
+  ): Promise<{ id: number; urlPdf: string | null } | null> {
+    const cuentaCobro = await CuentaCobroModel.findOne({
+      where: {
+        id,
+        tenantId,
+      },
+      attributes: ['id', 'urlPdf'],
+      paranoid: true,
+    });
+
+    if (!cuentaCobro) {
+      return null;
+    }
+
+    return Transformador.extraerDataValues(cuentaCobro);
   }
 }

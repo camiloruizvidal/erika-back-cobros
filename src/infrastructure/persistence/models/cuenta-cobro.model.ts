@@ -12,6 +12,7 @@ import {
 import { ClientePaqueteModel } from './cliente-paquete.model';
 import { CuentaCobroServicioModel } from './cuenta-cobro-servicio.model';
 import { ConceptoAdicionalModel } from './concepto-adicional.model';
+import { ClienteModel } from './cliente.model';
 import { EEstadoCuentaCobro } from '../../../domain/enums/estado-cuenta-cobro.enum';
 
 @Table({
@@ -34,6 +35,7 @@ export class CuentaCobroModel extends Model {
   @Column({ type: DataType.BIGINT, field: 'tenant_id' })
   tenantId!: number;
 
+  @ForeignKey(() => ClienteModel)
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'cliente_id' })
   clienteId!: number;
@@ -95,6 +97,9 @@ export class CuentaCobroModel extends Model {
   @Column({ type: DataType.TEXT, field: 'link_pago' })
   linkPago!: string | null;
 
+  @BelongsTo(() => ClienteModel)
+  cliente?: ClienteModel;
+
   @BelongsTo(() => ClientePaqueteModel)
   clientePaquete?: ClientePaqueteModel;
 
@@ -104,4 +109,3 @@ export class CuentaCobroModel extends Model {
   @HasMany(() => ConceptoAdicionalModel, 'cuenta_cobro_id')
   conceptosAdicionales?: ConceptoAdicionalModel[];
 }
-

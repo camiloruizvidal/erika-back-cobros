@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import moment from 'moment';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { CuentaCobroRepository } from '../../infrastructure/persistence/repositories/cuenta-cobro.repository';
 import { FormatearFecha } from '../../utils/functions/formatear-fecha.util';
 import { ClientePaqueteRepository } from '../../infrastructure/persistence/repositories/cliente-paquete.repository';
@@ -11,6 +13,8 @@ import { EEstadoCuentaCobro } from '../../domain/enums/estado-cuenta-cobro.enum'
 import { EFrecuenciaTipo } from '../../domain/enums/frecuencia-tipo.enum';
 import { ClientePaqueteModel } from '../../infrastructure/persistence/models/cliente-paquete.model';
 import { IGeneracionCuentasCobroIniciada } from '../../domain/interfaces/kafka-messages.interface';
+import { IPaginado } from '../../shared/interfaces/paginado.interface';
+import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
 
 @Injectable()
 export class CuentasCobroService {
@@ -202,5 +206,69 @@ export class CuentasCobroService {
     }
 
     return idsElegibles;
+  }
+
+  async listarCuentasCobro(
+    tenantId: number,
+    pagina: number,
+    tamanoPagina: number,
+    filtro?: string,
+  ): Promise<IPaginado<ICuentaCobroListado>> {
+    const offset = (pagina - 1) * tamanoPagina;
+
+    const resultado = await CuentaCobroRepository.listarCuentasCobroPaginadas(
+      tenantId,
+      offset,
+      tamanoPagina,
+      filtro,
+    );
+
+    const total = resultado.count;
+    const totalPaginas = tamanoPagina > 0 ? Math.ceil(total / tamanoPagina) : 0;
+
+    return {
+      meta: {
+        total,
+        pagina,
+        tamanoPagina,
+        totalPaginas,
+      },
+      data: resultado.rows,
+    };
+  }
+
+  async obtenerCuentaCobroPorId(
+    tenantId: number,
+    id: number,
+  ): Promise<{ id: number; urlPdf: string | null } | null> {
+    return await CuentaCobroRepository.obtenerPorId(tenantId, id);
+  }
+
+  async obtenerPdfCuentaCobro(
+    tenantId: number,
+    id: number,
+  ): Promise<{ buffer: Buffer; nombreArchivo: string }> {
+    const cuentaCobro: { id: number; urlPdf: string | null } | null =
+      await CuentaCobroRepository.obtenerPorId(tenantId, id);
+
+    if (!cuentaCobro || !cuentaCobro.urlPdf) {
+      throw new Error('Cuenta de cobro no encontrada o sin PDF generado');
+    }
+
+    const rutaPdf: string = cuentaCobro.urlPdf;
+
+    try {
+      await fs.access(rutaPdf);
+    } catch {
+      throw new Error('El archivo PDF no existe en el sistema de archivos');
+    }
+
+    const nombreArchivo = path.basename(rutaPdf);
+    const bufferPdf = await fs.readFile(rutaPdf);
+
+    return {
+      buffer: bufferPdf,
+      nombreArchivo,
+    };
   }
 }
