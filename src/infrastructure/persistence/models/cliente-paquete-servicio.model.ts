@@ -24,24 +24,23 @@ export class ClientePaqueteServicioModel extends Model {
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'cliente_paquete_id' })
-  clientePaqueteId!: number;
+  declare clientePaqueteId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(150), field: 'nombre_servicio' })
-  nombreServicio!: string;
+  declare nombreServicio: string;
 
   @AllowNull(false)
   @Column({
     type: DataType.DECIMAL(12, 2),
     field: 'valor_original',
   })
-  valorOriginal!: number;
+  declare valorOriginal: number;
 
   @AllowNull(false)
   @Column({
     type: DataType.DECIMAL(12, 2),
     field: 'valor_acordado',
   })
-  valorAcordado!: number;
+  declare valorAcordado: number;
 }
-

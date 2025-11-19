@@ -24,41 +24,41 @@ export class ClienteModel extends Model {
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'tenant_id' })
-  tenantId!: number;
+  declare tenantId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'tipo_documento_id' })
-  tipoDocumentoId!: number;
+  declare tipoDocumentoId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(100), field: 'primer_nombre' })
-  primerNombre!: string;
+  declare primerNombre: string;
 
   @AllowNull(true)
   @Column({ type: DataType.STRING(100), field: 'segundo_nombre' })
-  segundoNombre!: string | null;
+  declare segundoNombre: string | null;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(100), field: 'primer_apellido' })
-  primerApellido!: string;
+  declare primerApellido: string;
 
   @AllowNull(true)
   @Column({ type: DataType.STRING(100), field: 'segundo_apellido' })
-  segundoApellido!: string | null;
+  declare segundoApellido: string | null;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(400), field: 'nombre_completo' })
-  nombreCompleto!: string;
+  declare nombreCompleto: string;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(150) })
-  correo!: string;
+  declare correo: string;
 
   @AllowNull(true)
   @Column({ type: DataType.STRING(20) })
-  telefono!: string | null;
+  declare telefono: string | null;
 
   @AllowNull(true)
   @Column({ type: DataType.STRING(50) })
-  identificacion!: string | null;
+  declare identificacion: string | null;
 }

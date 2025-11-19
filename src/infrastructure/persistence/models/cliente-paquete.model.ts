@@ -29,53 +29,52 @@ export class ClientePaqueteModel extends Model {
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'tenant_id' })
-  tenantId!: number;
+  declare tenantId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'cliente_id' })
-  clienteId!: number;
+  declare clienteId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.BIGINT, field: 'paquete_original_id' })
-  paqueteOriginalId!: number;
+  declare paqueteOriginalId: number;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(150), field: 'nombre_paquete' })
-  nombrePaquete!: string;
+  declare nombrePaquete: string;
 
   @AllowNull(false)
   @Column({
     type: DataType.DECIMAL(12, 2),
     field: 'valor_acordado',
   })
-  valorAcordado!: number;
+  declare valorAcordado: number;
 
   @AllowNull(true)
   @Column({ type: DataType.INTEGER, field: 'dia_cobro' })
-  diaCobro!: number | null;
+  declare diaCobro: number | null;
 
   @AllowNull(false)
   @Column({ type: DataType.STRING(20), field: 'frecuencia_tipo' })
-  frecuenciaTipo!: EFrecuenciaTipo;
+  declare frecuenciaTipo: EFrecuenciaTipo;
 
   @AllowNull(true)
   @Column({ type: DataType.INTEGER, field: 'frecuencia_valor' })
-  frecuenciaValor!: number | null;
+  declare frecuenciaValor: number | null;
 
   @AllowNull(false)
   @Column({ type: DataType.DATE, field: 'fecha_inicio' })
-  fechaInicio!: Date;
+  declare fechaInicio: Date;
 
   @AllowNull(true)
   @Column({ type: DataType.DATE, field: 'fecha_fin' })
-  fechaFin!: Date | null;
+  declare fechaFin: Date | null;
 
   @Default(EEstado.ACTIVO)
   @AllowNull(false)
   @Column({ type: DataType.STRING(20) })
-  estado!: EEstado;
+  declare estado: EEstado;
 
   @HasMany(() => ClientePaqueteServicioModel, 'cliente_paquete_id')
   servicios?: ClientePaqueteServicioModel[];
 }
-
