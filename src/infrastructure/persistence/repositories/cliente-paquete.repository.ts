@@ -15,4 +15,22 @@ export class ClientePaqueteRepository {
 
     return paquetesTransformados as ClientePaqueteModel[];
   }
+
+  static async buscarPorPaqueteOriginalId(
+    tenantId: number,
+    paqueteOriginalId: number,
+  ): Promise<ClientePaqueteModel[]> {
+    const paquetes = await ClientePaqueteModel.findAll({
+      where: {
+        tenantId,
+        paqueteOriginalId,
+      },
+      attributes: ['id'],
+      paranoid: true,
+    });
+
+    return Transformador.extraerDataValues<ClientePaqueteModel[]>(
+      paquetes,
+    ) as ClientePaqueteModel[];
+  }
 }

@@ -27,7 +27,7 @@ import { ClienteModel } from '../models/cliente.model';
         ProcesoGeneracionModel,
         ClienteModel,
       ],
-      logging: Config.dbLogging,
+      logging: true, // Config.dbLogging,
       define: {
         underscored: true,
       },

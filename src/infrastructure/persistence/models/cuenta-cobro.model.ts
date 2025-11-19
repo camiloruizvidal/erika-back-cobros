@@ -97,6 +97,21 @@ export class CuentaCobroModel extends Model {
   @Column({ type: DataType.TEXT, field: 'link_pago' })
   declare linkPago: string | null;
 
+  @AllowNull(true)
+  @Column({ type: DataType.DATE, field: 'fecha_pago' })
+  declare fechaPago: Date | null;
+
+  @AllowNull(true)
+  @Column({
+    type: DataType.DECIMAL(12, 2),
+    field: 'valor_pagado',
+  })
+  declare valorPagado: number | null;
+
+  @AllowNull(true)
+  @Column({ type: DataType.STRING(500), field: 'url_pdf_pago' })
+  declare urlPdfPago: string | null;
+
   @BelongsTo(() => ClienteModel)
   cliente?: ClienteModel;
 

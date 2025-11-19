@@ -27,6 +27,8 @@ import { GenerarCuentasCobroResponseDto } from '../dto/generar-cuentas-cobro.res
 import { PaginadoCuentasCobroRequestDto } from '../dto/paginado-cuentas-cobro.request.dto';
 import { CuentasCobroPaginadasResponseDto } from '../dto/cuentas-cobro-paginadas.response.dto';
 import { EstadosCuentaCobroResponseDto } from '../dto/estados-cuenta-cobro.response.dto';
+import { PaginadoPagosRequestDto } from '../dto/paginado-pagos.request.dto';
+import { PagosPaginadasResponseDto } from '../dto/pagos-paginadas.response.dto';
 import { JwtTenantGuard } from '../guards/jwt-tenant.guard';
 import { IPaginado } from '../../shared/interfaces/paginado.interface';
 import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
@@ -156,6 +158,44 @@ export class CuentasCobroController {
     }
   }
 
+  @Get('pagos')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtTenantGuard)
+  @ApiOperation({
+    summary: 'Listar pagos',
+    description:
+      'Obtiene una lista paginada de pagos (cuentas de cobro con estado pagada)',
+  })
+  @ApiOkResponse({
+    description: 'Lista de pagos obtenida exitosamente',
+    type: PagosPaginadasResponseDto,
+  })
+  async listarPagos(
+    @Query() query: PaginadoPagosRequestDto,
+    @Req() request: RequestConTenant,
+  ): Promise<PagosPaginadasResponseDto> {
+    try {
+      const tenantId = request.tenantId;
+      const pagina = query.pagina ?? 1;
+      const tamanoPagina = query.tamanoPagina ?? 10;
+      const clientePaqueteId = query.clientePaqueteId;
+
+      const resultado = await this.cuentasCobroService.listarPagos(
+        tenantId,
+        pagina,
+        tamanoPagina,
+        clientePaqueteId,
+      );
+
+      return plainToInstance(PagosPaginadasResponseDto, resultado, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.logger.error({ error: JSON.stringify(error) });
+      this.manejadorError.resolverErrorApi(error);
+    }
+  }
+
   @Get(':id/pdf')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtTenantGuard)
@@ -188,6 +228,54 @@ export class CuentasCobroController {
       const tenantId = request.tenantId;
       const { buffer, nombreArchivo } =
         await this.cuentasCobroService.obtenerPdfCuentaCobro(tenantId, id);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `inline; filename="${nombreArchivo}"`,
+      );
+      res.setHeader('Content-Length', buffer.length.toString());
+
+      res.send(buffer);
+    } catch (error) {
+      this.logger.error({ error: JSON.stringify(error) });
+      this.manejadorError.resolverErrorApi(error);
+    }
+  }
+
+  @Get(':id/pago/pdf')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtTenantGuard)
+  @ApiOperation({
+    summary: 'Descargar PDF de recibo de pago',
+    description:
+      'Descarga el PDF del recibo de pago de una cuenta de cobro específica por su ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'PDF descargado exitosamente',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Pago no encontrado o sin PDF de recibo generado',
+  })
+  async descargarPdfPago(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: RequestConTenant,
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const tenantId = request.tenantId;
+      const { buffer, nombreArchivo } =
+        await this.cuentasCobroService.obtenerPdfPago(tenantId, id);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(

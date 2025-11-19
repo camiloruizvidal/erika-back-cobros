@@ -12,9 +12,13 @@ import { EEstadoProceso } from '../../domain/enums/estado-proceso.enum';
 import { EEstadoCuentaCobro } from '../../domain/enums/estado-cuenta-cobro.enum';
 import { EFrecuenciaTipo } from '../../domain/enums/frecuencia-tipo.enum';
 import { ClientePaqueteModel } from '../../infrastructure/persistence/models/cliente-paquete.model';
+import { CuentaCobroModel } from '../../infrastructure/persistence/models/cuenta-cobro.model';
 import { IGeneracionCuentasCobroIniciada } from '../../domain/interfaces/kafka-messages.interface';
 import { IPaginado } from '../../shared/interfaces/paginado.interface';
-import { ICuentaCobroListado } from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
+import {
+  ICuentaCobroListado,
+  IPagoListado,
+} from '../../infrastructure/persistence/repositories/interfaces/cuenta-cobro-repository.interface';
 
 @Injectable()
 export class CuentasCobroService {
@@ -288,6 +292,70 @@ export class CuentasCobroService {
     }
 
     const rutaPdf: string = cuentaCobro.urlPdf;
+
+    try {
+      await fs.access(rutaPdf);
+    } catch {
+      throw new Error('El archivo PDF no existe en el sistema de archivos');
+    }
+
+    const nombreArchivo = path.basename(rutaPdf);
+    const bufferPdf = await fs.readFile(rutaPdf);
+
+    return {
+      buffer: bufferPdf,
+      nombreArchivo,
+    };
+  }
+
+  async listarPagos(
+    tenantId: number,
+    pagina: number,
+    tamanoPagina: number,
+    clientePaqueteId: number,
+  ): Promise<IPaginado<IPagoListado>> {
+    const offset = (pagina - 1) * tamanoPagina;
+
+    const resultado = await CuentaCobroRepository.listarPagosPaginados(
+      tenantId,
+      offset,
+      tamanoPagina,
+      clientePaqueteId,
+    );
+
+    const total = resultado.count;
+    const totalPaginas = tamanoPagina > 0 ? Math.ceil(total / tamanoPagina) : 0;
+
+    return {
+      meta: {
+        total,
+        pagina,
+        tamanoPagina,
+        totalPaginas,
+      },
+      data: resultado.rows,
+    };
+  }
+
+  async obtenerPdfPago(
+    tenantId: number,
+    id: number,
+  ): Promise<{ buffer: Buffer; nombreArchivo: string }> {
+    const cuentaCobro = await CuentaCobroModel.findOne({
+      where: {
+        id,
+        tenantId,
+        estado: EEstadoCuentaCobro.PAGADA,
+      },
+      attributes: ['id', 'urlPdfPago'],
+      paranoid: true,
+    });
+
+    if (!cuentaCobro || !cuentaCobro.urlPdfPago) {
+      throw new Error('Pago no encontrado o sin PDF de recibo generado');
+    }
+
+    const rutaPdf: string = cuentaCobro.urlPdfPago;
 
     try {
       await fs.access(rutaPdf);

@@ -5,11 +5,13 @@ import { CuentaCobroModel } from '../models/cuenta-cobro.model';
 import { CuentaCobroServicioModel } from '../models/cuenta-cobro-servicio.model';
 import { ClienteModel } from '../models/cliente.model';
 import { ClientePaqueteModel } from '../models/cliente-paquete.model';
+import { EEstadoCuentaCobro } from '../../../domain/enums/estado-cuenta-cobro.enum';
 import {
   ICrearCuentaCobro,
   ICuentaCobro,
   ICrearCuentaCobroServicio,
   ICuentaCobroListado,
+  IPagoListado,
 } from './interfaces/cuenta-cobro-repository.interface';
 import { IResultadoFindAndCount } from '../../../shared/interfaces/sequelize-find.interface';
 
@@ -326,5 +328,52 @@ export class CuentaCobroRepository {
     }
 
     return Transformador.extraerDataValues(cuentaCobro);
+  }
+
+  static async listarPagosPaginados(
+    tenantId: number,
+    offset: number,
+    limit: number,
+    clientePaqueteId: number,
+  ): Promise<IResultadoFindAndCount<IPagoListado>> {
+    const resultado = await CuentaCobroModel.findAndCountAll({
+      where: {
+        tenantId,
+        estado: EEstadoCuentaCobro.PAGADA,
+        clientePaqueteId,
+      },
+      include: [
+        {
+          model: ClienteModel,
+          as: 'cliente',
+          attributes: [
+            'id',
+            'primerNombre',
+            'segundoNombre',
+            'primerApellido',
+            'segundoApellido',
+            'nombreCompleto',
+            'correo',
+            'identificacion',
+          ],
+          required: true,
+        },
+        {
+          model: ClientePaqueteModel,
+          as: 'clientePaquete',
+          attributes: ['id', 'paqueteOriginalId'],
+          required: true,
+        },
+      ],
+      offset,
+      limit,
+      order: [
+        ['fechaPago', 'DESC'],
+        ['id', 'DESC'],
+      ],
+      paranoid: true,
+    });
+
+    return Transformador.extraerDataValues(resultado);
   }
 }
